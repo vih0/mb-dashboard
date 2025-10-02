@@ -2,6 +2,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { UsersManagement } from "@/components/users-management"
 import { SurveyDashboard } from "@/components/survey-dashboard"
+import { ContentManagement } from "@/components/content-management"
 import { Users, BarChart3, Heart } from "lucide-react"
 import Image from "next/image"
 
@@ -24,7 +25,7 @@ export default function Home() {
 
       <main className="container mx-auto px-6 py-8">
         <Tabs defaultValue="dashboard" className="w-full">
-          <TabsList className="grid w-full max-w-md grid-cols-2 mb-8 h-12 bg-muted/50">
+          <TabsList className="grid w-full max-w-md grid-cols-3 mb-8 h-12 bg-muted/50">
             <TabsTrigger value="dashboard" className="flex items-center gap-2 data-[state=active]:bg-card">
               <BarChart3 className="h-4 w-4" />
               Dashboard
@@ -32,6 +33,10 @@ export default function Home() {
             <TabsTrigger value="users" className="flex items-center gap-2 data-[state=active]:bg-card">
               <Users className="h-4 w-4" />
               Participantes
+            </TabsTrigger>
+            <TabsTrigger value="content" className="flex items-center gap-2 data-[state=active]:bg-card">
+              <Users className="h-4 w-4" />
+              Conteudo
             </TabsTrigger>
           </TabsList>
 
@@ -41,6 +46,10 @@ export default function Home() {
 
           <TabsContent value="users" className="mt-0">
             <UsersManagement />
+          </TabsContent>
+          
+          <TabsContent value="content" className="mt-0">
+            <ContentManagement />
           </TabsContent>
         </Tabs>
       </main>

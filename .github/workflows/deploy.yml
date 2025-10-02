@@ -1,0 +1,110 @@
+name: Dashboard - Build & Deploy
+
+on:
+  push:
+    branches:
+      - master      # ajuste se usar 'main'
+  workflow_dispatch:
+
+concurrency:
+  group: dashboard-deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: '20.x'         # Next 14/15 roda bem no Node 20
+  APP_DIR: ${{ secrets.APP_DIR }}        # Ex: /var/www/meubem/dashboard
+  PM2_APP_NAME: ${{ secrets.PM2_APP_NAME }}  # Ex: mb-dashboard
+  DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}    # Ex: 203.0.113.10
+  DEPLOY_USER: ${{ secrets.DEPLOY_USER }}    # Ex: deploy
+  SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}    # chave privada
+  ENV_FILE_B64: ${{ secrets.ENV_FILE_B64 }}  # .env codificado em base64 (opcional)
+
+jobs:
+  build:
+    name: CI (lint + build)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+          run_install: true   # pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+        # se quiser ignorar lint no CI: remova ou deixe continuar em warning
+
+      - name: Build
+        run: pnpm build
+        # apenas valida que o projeto compila; artefato não é usado no deploy
+
+  deploy:
+    name: Deploy (SSH)
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/master'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Add SSH key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ env.SSH_KEY }}
+
+      - name: Add host to known_hosts
+        run: |
+          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+
+      - name: Rsync project (sem node_modules/.next)
+        run: |
+          rsync -az --delete \
+            --exclude ".git" \
+            --exclude ".github" \
+            --exclude "node_modules" \
+            --exclude ".next" \
+            ./ $DEPLOY_USER@$DEPLOY_HOST:$APP_DIR
+
+      - name: (Opcional) Enviar .env
+        if: env.ENV_FILE_B64 != ''
+        run: |
+          echo "$ENV_FILE_B64" | base64 -d > .env
+          scp .env $DEPLOY_USER@$DEPLOY_HOST:$APP_DIR/.env
+          shred -u .env
+
+      - name: Remote install, build & restart
+        run: |
+          ssh $DEPLOY_USER@$DEPLOY_HOST << 'EOF'
+            set -e
+            export NVM_DIR="$HOME/.nvm"
+            if [ -s "$NVM_DIR/nvm.sh" ]; then . "$NVM_DIR/nvm.sh"; fi
+            # garanta Node 20 no servidor; com nvm ou já instalado:
+            node -v || true
+            cd "$APP_DIR"
+            # Instala só prod no servidor
+            corepack enable || true
+            pnpm -v || npm i -g pnpm
+            pnpm install --frozen-lockfile --prod
+            # Build para produção no servidor (Next SSR)
+            pnpm build
+            # Sobe / reinicia com PM2
+            if ! command -v pm2 >/dev/null 2>&1; then npm i -g pm2; fi
+            # Cria processo caso não exista
+            pm2 describe "$PM2_APP_NAME" >/dev/null 2>&1 || pm2 start "pnpm start" --name "$PM2_APP_NAME" -- \
+              --port $(${PORT:-3000})
+            # Reload zero-downtime
+            pm2 reload "$PM2_APP_NAME"
+            pm2 save
+          EOF
