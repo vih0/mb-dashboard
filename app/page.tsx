@@ -3,6 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { UsersManagement } from "@/components/users-management"
 import { SurveyDashboard } from "@/components/survey-dashboard"
 import { Users, BarChart3, Heart } from "lucide-react"
+import Image from "next/image"
 
 export default function Home() {
   return (
@@ -10,12 +11,12 @@ export default function Home() {
       <header className="border-b border-border/50 bg-card/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="container mx-auto px-6 py-6">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
-              <Heart className="h-5 w-5 text-primary" />
+            <div className="h-10 w-10 rounded-xl  flex items-center justify-center">
+              <Image src={'./meubem-logo.png'}  width={60} height={40} alt=""  className="h-12 w-10 text-primary" />
             </div>
             <div>
-              <h1 className="text-xl font-semibold text-foreground">Pesquisa de Bem-Estar</h1>
-              <p className="text-sm text-muted-foreground">Cuidando da saúde mental da equipe</p>
+              <h1 className="text-xl font-semibold text-foreground">Plataforma de Bem-Estar</h1>
+              <p className="text-sm text-muted-foreground">Cuidando da saúde da equipe</p>
             </div>
           </div>
         </div>

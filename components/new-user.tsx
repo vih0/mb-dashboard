@@ -33,7 +33,7 @@ export function AddParticipantModal({ open, onOpenChange, onAddUser }: AddPartic
       })
       return
     }
-
+     
     onAddUser(newUser)
     setNewUser({ name: "", phone: "", sector: "" })
     onOpenChange(false)

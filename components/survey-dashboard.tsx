@@ -101,7 +101,7 @@ export function SurveyDashboard() {
             <ResponsiveContainer width="100%" height={280}>
               <BarChart data={sectorData}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" vertical={false} />
-                <XAxis dataKey="sector" className="text-xs" tick={{ fill: "hsl(var(--muted-foreground))" }} />
+                <XAxis dataKey="sector" className="text-xs" tick={{ fill: "hsl(var(--chart-3))" }} />
                 <YAxis className="text-xs" tick={{ fill: "hsl(var(--muted-foreground))" }} />
                 <Tooltip
                   contentStyle={{
@@ -126,8 +126,8 @@ export function SurveyDashboard() {
             <ResponsiveContainer width="100%" height={280}>
               <BarChart data={wellbeingData}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" vertical={false} />
-                <XAxis dataKey="sector" className="text-xs" tick={{ fill: "hsl(var(--muted-foreground))" }} />
-                <YAxis domain={[0, 10]} className="text-xs" tick={{ fill: "hsl(var(--muted-foreground))" }} />
+                <XAxis dataKey="sector" className="text-xs" tick={{ fill: "hsl(var(--chart-1))" }} />
+                <YAxis domain={[0, 10]} className="text-xs" tick={{ fill: "hsl(var(--chart-1))" }} />
                 <Tooltip
                   contentStyle={{
                     backgroundColor: "hsl(var(--card))",

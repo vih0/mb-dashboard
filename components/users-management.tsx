@@ -8,25 +8,22 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Send, Search, UserPlus } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { AddParticipantModal } from "./new-user"
 
-// Dados de exemplo - em produção viriam de uma API/banco de dados
+
 const initialUsers = [
-  { id: 1, name: "João Silva", phone: "(11) 98765-4321", sector: "Vendas" },
-  { id: 2, name: "Maria Santos", phone: "(11) 97654-3210", sector: "Marketing" },
-  { id: 3, name: "Pedro Oliveira", phone: "(11) 96543-2109", sector: "TI" },
-  { id: 4, name: "Ana Costa", phone: "(11) 95432-1098", sector: "RH" },
-  { id: 5, name: "Carlos Souza", phone: "(11) 94321-0987", sector: "Vendas" },
-  { id: 6, name: "Juliana Lima", phone: "(11) 93210-9876", sector: "Marketing" },
-  { id: 7, name: "Roberto Alves", phone: "(11) 92109-8765", sector: "TI" },
-  { id: 8, name: "Fernanda Rocha", phone: "(11) 91098-7654", sector: "RH" },
+  { id: 1, name: "Ana Lima", phone: "(98) 98895-9348", sector: "Product Manager",contact:"559888959348" },
+  { id: 2, name: "Kassio Sousa", phone: "(98) 9999-9999", sector: "Product Manager",contact:"559882566046" },
+  { id: 3, name: "Jasmyn Lemos", phone: "(98) 9999-9999", sector: "Product Manager",contact:"559888959348" },
+  {id:4 , name: "Vitoria da Silva", phone: "(98) 9999-9999", sector: "Desenvolvedor",contact:"55984262344" },
 ]
 
 export function UsersManagement() {
-  const [users] = useState(initialUsers)
+  const [users,setUsers] = useState(initialUsers)
   const [selectedUsers, setSelectedUsers] = useState<number[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const { toast } = useToast()
-
+const [isModalOpen, setIsModalOpen] = useState(false)
   const filteredUsers = users.filter(
     (user) =>
       user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -45,23 +42,60 @@ export function UsersManagement() {
       setSelectedUsers(filteredUsers.map((u) => u.id))
     }
   }
+const closeModal = () => {
+  setIsModalOpen(false);
+} 
+  const handleAddUser = (newUser: { name: string; phone: string; sector: string }) => {
+    const newId = users.length > 0 ? Math.max(...users.map((u) => u.id)) + 1 : 1
+    setUsers([...users, { id: newId, ...newUser, contact: newUser.phone.replace(/\D/g, "") }])
+  }
+ const handleSendMessage = async () => {
+  if (selectedUsers.length === 0) {
+    toast({
+      title: "Nenhum participante selecionado",
+      description: "Selecione pelo menos um participante para enviar a pesquisa.",
+      variant: "destructive",
+    });
+    return;
+  }
 
-  const handleSendMessage = () => {
-    if (selectedUsers.length === 0) {
-      toast({
-        title: "Nenhum participante selecionado",
-        description: "Selecione pelo menos um participante para enviar a pesquisa.",
-        variant: "destructive",
-      })
-      return
+  try {
+
+    for (const user of users) {
+      const response = await fetch(
+        'http://localhost:5678/webhook/2f6ee2a6-365a-4415-aae2-93bd9eda2810',
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json; charset=utf-8"
+          },
+          body: JSON.stringify({ nome: user.name, contato: user.contact })
+        }
+      );
+
+   
+      if (!response.ok) {
+        throw new Error(`Falha ao enviar para ${user.name}: ${response.statusText}`);
+      }
     }
 
+  
     toast({
       title: "Pesquisa enviada!",
       description: `Convite enviado para ${selectedUsers.length} participante(s).`,
-    })
-    setSelectedUsers([])
+    });
+    setSelectedUsers([]);
+  } catch (err) {
+    console.error(err);
+
+    toast({
+      title: "Erro ao enviar pesquisa",
+      description: "Não foi possível enviar a pesquisa. Tente novamente.",
+      variant: "destructive",
+    });
   }
+};
+
 
   return (
     <div className="space-y-6">
@@ -76,6 +110,7 @@ export function UsersManagement() {
               variant="outline"
               size="sm"
               className="border-primary/20 text-primary hover:bg-primary/10 bg-transparent"
+               onClick={() => setIsModalOpen(true)}
             >
               <UserPlus className="h-4 w-4 mr-2" />
               Adicionar
@@ -144,6 +179,7 @@ export function UsersManagement() {
           </div>
         </CardContent>
       </Card>
+      <AddParticipantModal onAddUser={handleAddUser} open={isModalOpen} onOpenChange={closeModal} />
     </div>
   )
 }
